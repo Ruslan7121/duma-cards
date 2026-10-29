@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Карточки голосования — Работа Госдумы и Правительства</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f5f6f8;color:#141418}
+main{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 4px}p{margin:0 0 14px;color:#6e7078;font-size:15px}
+.btn{display:block;width:100%;max-width:420px;height:52px;border:0;border-radius:12px;background:#0a64d6;color:#fff;font:700 17px Inter,sans-serif;cursor:pointer;margin:0 0 16px}
+.imgs{display:flex;flex-wrap:wrap;gap:14px}.imgs img{flex:1 1 260px;max-width:420px;min-width:0;width:100%;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.15);background:#fff}
+#st{min-height:20px}
+</style></head><body><main>
+<h1 id="h">Карточки голосования</h1><p id="st">Готовлю картинки…</p>
+<button class="btn" id="b" hidden></button>
+<div class="imgs" id="im"></div>
+</main>
+<script src="cards.js"></script>
+<script>
+(async function(){
+  var st=document.getElementById('st'), b=document.getElementById('b'), im=document.getElementById('im');
+  try{
+    var h=location.hash.slice(1); if(!h){st.textContent='Нет данных голосования в ссылке. Откройте страницу кнопкой «Сохранить голосование».';return;}
+    var bin=atob(h.replace(/-/g,'+').replace(/_/g,'/')); var u8=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    var P=JSON.parse(new TextDecoder().decode(u8)); setPlain(P.v.id,P.p);
+    try{await Promise.race([Promise.all(['400','500','700','800'].map(function(w){return document.fonts.load(w+' 40px Inter','АБВ abc 123')})),new Promise(function(r){setTimeout(r,3000)})]);}catch(e){}
+    var cv=drawCards(P.v,P.d); document.getElementById('h').textContent=P.v.q;
+    var bm=(P.v.doc.match(/(\d+-\d+)/)||[])[1]||P.v.id, base=P.d+'_'+bm, names=[base+'_1.png',base+'_2.png'];
+    var blobs=await Promise.all(cv.map(function(c){return new Promise(function(r){c.toBlob(r,'image/png')})}));
+    var urls=blobs.map(function(x){return URL.createObjectURL(x)});
+    urls.forEach(function(u,i){var g=new Image();g.src=u;g.alt='Картинка '+(i+1);im.appendChild(g)});
+    var files=blobs.map(function(x,i){return new File([x],names[i],{type:'image/png'})});
+    function dl(){urls.forEach(function(u,i){setTimeout(function(){var a=document.createElement('a');a.href=u;a.download=names[i];document.body.appendChild(a);a.click();a.remove();},i*500)});}
+    var mob=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+    if(mob&&navigator.canShare&&navigator.canShare({files:files})){
+      b.textContent='Сохранить в Фото'; b.hidden=false;
+      st.textContent='Нажмите кнопку и выберите «Сохранить 2 изображения». Или удерживайте палец на картинке.';
+      b.onclick=async function(){try{await navigator.share({files:files});st.textContent='Готово.';}catch(e){if(e&&e.name!=='AbortError'){st.textContent='Не получилось — скачиваю файлы.';dl();}}};
+    }else{
+      b.textContent='Скачать обе картинки'; b.hidden=false; b.onclick=dl;
+      st.textContent=mob?'Удерживайте палец на картинке → «Сохранить в Фото», или нажмите кнопку.':'Картинки скачиваются автоматически. Если нет — нажмите кнопку.';
+      if(!mob) dl();
+    }
+  }catch(e){st.textContent='Не удалось создать картинки: '+e.message;}
+})();
+</script></body></html>
